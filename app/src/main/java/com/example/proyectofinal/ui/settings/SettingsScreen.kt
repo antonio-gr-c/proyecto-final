@@ -1,29 +1,25 @@
 package com.example.proyectofinal.ui.settings
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.example.proyectofinal.MyApp
 import com.example.proyectofinal.data.datastore.SettingsDataStore
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    // Obtenemos el DataStore directamente desde la Application
-    settings: SettingsDataStore = (LocalContext.current.applicationContext as MyApp).settings
+    settings: SettingsDataStore = (LocalContext.current.applicationContext as MyApp).settings,
+    navController: NavController? = null // 👈 agregado para logout
 ) {
     val scope = rememberCoroutineScope()
-    // Leemos el Flow de modo oscuro como State
     val darkMode by settings.darkModeFlow.collectAsState(initial = false)
 
     Scaffold(
@@ -35,7 +31,8 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -49,6 +46,19 @@ fun SettingsScreen(
                         scope.launch { settings.setDarkMode(it) }
                     }
                 )
+            }
+
+            // 👇 Botón para cerrar sesión
+            Button(
+                onClick = {
+                    FirebaseAuth.getInstance().signOut()
+                    navController?.navigate("login") {
+                        popUpTo("task_list") { inclusive = true }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Cerrar sesión")
             }
         }
     }

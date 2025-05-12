@@ -5,10 +5,7 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.runtime.*
 import androidx.core.app.ActivityCompat
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -18,19 +15,23 @@ import androidx.navigation.navArgument
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.example.proyectofinal.data.datastore.SettingsDataStore
+import com.example.proyectofinal.ui.login.LoginScreen
+import com.example.proyectofinal.ui.login.LoginViewModel
+import com.example.proyectofinal.ui.login.RegisterScreen
+import com.example.proyectofinal.ui.login.RegisterViewModel
 import com.example.proyectofinal.ui.settings.SettingsScreen
 import com.example.proyectofinal.ui.taskdetail.TaskDetailScreen
 import com.example.proyectofinal.ui.tasklist.TaskListScreen
 import com.example.proyectofinal.ui.theme.ProyectoFinalTheme
 import com.example.proyectofinal.worker.ReminderWorker
+import com.google.firebase.auth.FirebaseAuth
 import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // En Android 13+ necesitamos pedir permiso para mostrar notifs
+        // Permiso para notificaciones en Android 13+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ActivityCompat.requestPermissions(
                 this,
@@ -40,7 +41,7 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            // Programamos la notificación de prueba, pero dentro de Compose
+            // Programamos notificación de prueba
             LaunchedEffect(Unit) {
                 val testRequest = OneTimeWorkRequestBuilder<ReminderWorker>()
                     .setInitialDelay(5, TimeUnit.SECONDS)
@@ -48,16 +49,52 @@ class MainActivity : ComponentActivity() {
                 WorkManager.getInstance(this@MainActivity).enqueue(testRequest)
             }
 
-            // Tomamos la instancia de SettingsDataStore
+            // Dark mode desde DataStore
             val settings: SettingsDataStore = (application as MyApp).settings
             val isDarkMode by settings.darkModeFlow.collectAsState(initial = false)
 
             ProyectoFinalTheme(darkTheme = isDarkMode) {
                 val navController = rememberNavController()
+
+                val auth = FirebaseAuth.getInstance()
+                val isLoggedIn = auth.currentUser != null
+
                 NavHost(
                     navController = navController,
-                    startDestination = "task_list"
+                    startDestination = if (isLoggedIn) "task_list" else "login"
                 ) {
+                    composable("login") {
+                        val loginViewModel = remember { LoginViewModel() }
+                        LoginScreen(
+                            viewModel = loginViewModel,
+                            onLoginSuccess = {
+                                navController.navigate("task_list") {
+                                    popUpTo("login") { inclusive = true }
+                                }
+                            },
+                            onRegisterClick = {
+                                navController.navigate("register")
+                            }
+                        )
+                    }
+
+                    composable("register") {
+                        val registerViewModel = remember { RegisterViewModel() }
+                        RegisterScreen(
+                            viewModel = registerViewModel,
+                            onRegisterSuccess = {
+                                navController.navigate("task_list") {
+                                    popUpTo("register") { inclusive = true }
+                                }
+                            },
+                            onBackToLogin = {
+                                navController.navigate("login") {
+                                    popUpTo("register") { inclusive = true }
+                                }
+                            }
+                        )
+                    }
+
                     composable("task_list") {
                         TaskListScreen(
                             onTaskClick     = { id -> navController.navigate("task_detail/$id") },
@@ -65,6 +102,7 @@ class MainActivity : ComponentActivity() {
                             onSettingsClick = { navController.navigate("settings") }
                         )
                     }
+
                     composable(
                         route = "task_detail/{taskId}",
                         arguments = listOf(navArgument("taskId") {
@@ -82,14 +120,15 @@ class MainActivity : ComponentActivity() {
                             onDeleted = { navController.popBackStack() }
                         )
                     }
+
                     composable("settings") {
-                        SettingsScreen(settings = settings)
+                        SettingsScreen(
+                            settings = settings,
+                            navController = navController
+                        )
                     }
                 }
             }
         }
     }
 }
-
-
-

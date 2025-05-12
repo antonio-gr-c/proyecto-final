@@ -1,9 +1,9 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    // Añadimos kapt directamente
     id("org.jetbrains.kotlin.kapt")
     alias(libs.plugins.kotlin.compose)
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -40,6 +40,7 @@ android {
 }
 
 dependencies {
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -50,31 +51,28 @@ dependencies {
     implementation(libs.androidx.material3)
 
     implementation("androidx.work:work-runtime-ktx:2.8.1")
-
     implementation("com.airbnb.android:lottie-compose:6.0.0")
 
-// Retrofit + Moshi
+    // Retrofit + Moshi
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-moshi:2.9.0")
     implementation("com.squareup.moshi:moshi-kotlin:1.14.0")
 
-// (Ya tienes coroutines-android, si no:)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
-
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
     implementation("androidx.navigation:navigation-compose:2.5.3")
-// ICONOS de Material
     implementation("androidx.compose.material:material-icons-extended")
-// Preferences DataStore
+
+    // Preferences DataStore
     implementation("androidx.datastore:datastore-preferences:1.0.0")
 
-
-    // ROOM (usar coordenadas directas evita problemas con version catalog)
+    // Room
     implementation("androidx.room:room-runtime:2.7.1")
     implementation("androidx.room:room-ktx:2.7.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
-
     kapt("androidx.room:room-compiler:2.7.1")
+
+    // ✅ Firebase Auth
+    implementation("com.google.firebase:firebase-auth-ktx:22.3.1")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

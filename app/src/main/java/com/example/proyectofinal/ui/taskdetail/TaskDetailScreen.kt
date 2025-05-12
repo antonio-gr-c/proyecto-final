@@ -59,7 +59,7 @@ fun TaskDetailScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Aquí podrías agregar un selector de fecha/hora
+
 
                 Button(
                     onClick = { viewModel.save(onDone = onSaved) },
